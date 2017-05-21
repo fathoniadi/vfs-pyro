@@ -1,0 +1,173 @@
+import sys
+import Pyro4
+import os
+
+list_workers = ['PYRO:worker@127.0.0.1:9001', 'PYRO:worker@127.0.0.1:9002']
+workers = []
+
+
+@Pyro4.expose
+@Pyro4.callback
+class Middleware(object):
+
+    def __init__(self):
+        self.commands = ['ls','cd','rm','mv','touch','exit']
+        return
+
+    def getCommands(self):
+        return self.commands
+
+    def listingFolder(self, cwd, path=None):
+        
+    	list_folders = []
+    	for worker in workers:
+            error, list_folder = worker.listingFolder(cwd, path)
+            list_folders = list_folders+list_folder
+
+        if(len(list_folders)):
+            return None, list_folders
+        else:
+            return 'Folder Tidak Ada', []
+
+    def changeDir(self, cwd):
+        flag_exist = 0
+        for worker in workers:
+            res = worker.isExistFolder(cwd)
+            if(res):
+                flag_exist = 1;
+                break
+        if(flag_exist):
+            return True
+        else:
+            return False
+
+
+    def args(self,args,cwd):
+        if args[0] == 'ls':
+            if(len(args)==1):
+                
+                error, result = self.listingFolder(cwd)
+                return error, result, cwd
+            else:
+                
+                error, result = self.listingFolder(cwd, args[1])
+                return error, result, cwd
+
+        elif args[0] == 'cd':
+            if(len(args)==1):
+                cwd = '/'
+                return None, '/', cwd
+            else:
+                if args[1][0] == '/':
+                    flag = self.changeDir(args[1])
+                    if(flag):
+                        cwd = args[1]
+                        return None, cwd , cwd
+                    else:
+                        return 'Error Folder tidak ada', cwd , cwd
+
+                elif '../' in args[1]:
+                    temp_args = args[1].split('../')
+                    empty_n = temp_args.count('')
+
+                    temp_cwds = cwd.split('/')
+
+                    if(len(temp_args)==empty_n):
+                        counter = empty_n-1
+                        
+                        
+                        if(empty_n>len(temp_cwds)):
+                            cwd = '/'
+                            return None,cwd,cwd
+
+                        for i in range(len(temp_cwds)-1, 0, -1):
+                            
+                            temp_cwds[i] = temp_args[counter]
+                            counter-=1
+                            if(counter==0):
+                                cwd_fix = []
+                                for temp_cwd in temp_cwds:
+                                    
+                                    if len(temp_cwd)>0:
+                                        cwd_fix.append(temp_cwd)
+
+                                cwd_fix = '/'.join(cwd_fix)
+                                if(cwd_fix=='/'):
+                                    cwd_fix == '/'
+                                else:
+                                    cwd_fix = '/'+cwd_fix
+                                break
+                        flag = self.changeDir(cwd_fix)
+                        if(flag):
+                            return None, cwd_fix , cwd_fix
+                        else:
+                            return 'Error Folder tidak ada', cwd_fix , cwd_fix
+                    else:
+                        
+                        temp_cwds.reverse()
+                        
+                        counter=1;
+                        cwd_fix = '/'
+                        flag_break = 0;
+                        for i in range(0, len(temp_cwds)-1):
+                            
+                            temp_cwds[i] = temp_args[counter]
+                            counter+=1
+                            
+                            if(len(temp_args)==counter):
+                                cwd_fix = []
+                                temp_cwds.reverse()
+                                for temp_cwd in temp_cwds:
+                                    
+                                    if len(temp_cwd)>0:
+                                        cwd_fix.append(temp_cwd)
+
+                                cwd_fix = '/'.join(cwd_fix)
+                                if(cwd_fix=='/'):
+                                    cwd_fix == '/'
+                                else:
+                                    cwd_fix = '/'+cwd_fix
+                                break
+                        
+                        flag = self.changeDir(cwd_fix)
+                        if(flag and cwd_fix != '/'):
+                            return None, cwd_fix , cwd_fix
+                        else:
+                            return 'Error Folder tidak ada', cwd , cwd
+                else:
+                    if cwd == '/':
+                        flag = self.changeDir(cwd+args[1])
+                        if(flag):
+                            cwd = cwd+args[1]
+                            return None, cwd , cwd
+                        else:
+                            return 'Error Folder tidak ada', cwd , cwd
+                    else:
+                        flag = self.changeDir(cwd+'/'+args[1])
+                        if(flag):
+                            cwd = cwd+'/'+args[1]
+                            return None, cwd , cwd
+                        else:
+                            return 'Error Folder tidak ada', cwd , cwd
+
+                return None, cwd , cwd
+        else:
+        	return None, []
+
+
+
+def listenToWorker():
+	for list_worker in list_workers:
+		worker = Pyro4.Proxy(list_worker)
+		workers.append(worker)
+
+def main():
+	listenToWorker()
+	Pyro4.Daemon.serveSimple(
+        {
+            Middleware: "middleware"
+        },
+        ns=False, host="127.0.0.1", port=9000)
+
+if __name__ == "__main__":
+    main()
