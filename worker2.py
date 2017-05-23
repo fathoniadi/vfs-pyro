@@ -15,12 +15,11 @@ class Worker(object):
     #def createPath(self,wcd ,path):
 
     def isExistFolder(self, path):
-        print(path)
         if(path == '/'):
             path = path+self.sharing_folder['path']
-        
+            
         paths = path.split('/')
-        if(paths[1] != self.sharing_folder['path']):
+        if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
             return False
         full_path = self.sharing_folder['base']+path
         print(full_path)
@@ -38,12 +37,13 @@ class Worker(object):
     def listingFolder(self, cwd, path=None):
         print (path)
         if(path == '/'):
-            return None,[self.sharing_folder['path']]
+            return None, [self.sharing_folder['path']]
 
         flag = self.isExistFolder(path)
         if(flag):
-            print('Masuk sini')
-            return None, os.listdir(self.sharing_folder['base']+path)
+            list_folders = os.listdir(self.sharing_folder['base']+path)
+            print(list_folders)
+            return None, list_folders
         else:
             return 'Folder tidak ada', []
 

@@ -27,7 +27,7 @@ def main():
 				else:
 					if(isinstance(results, list)):
 						for result in results:
-							print(result)
+							print('isi '+result)
 					else:
 						print(results)
 

@@ -90,11 +90,17 @@ class Middleware(object):
     def listingFolder(self, cwd, path=None):
         
     	list_folders = []
+        errors = []
         flag_exist = 0
     	for worker in workers:
             error, list_folder = worker.listingFolder(cwd, path)
             list_folders = list_folders+list_folder
+            if(error is not None):
+                errors.append(error)
+            print(list_folder)
 
+        if(len(workers)==len(errors)):
+            return 'Tidak ada folder', []
         return None, list_folders
 
     def checkDir(self, cwd):
