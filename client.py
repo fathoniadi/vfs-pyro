@@ -9,9 +9,9 @@ def main():
     while True:
         args = []
         print('Client > '+cwd+' % '),
-        arg = raw_input()
+        arg = input()
         args.extend(arg.split(' '))
-      
+
         if args[0] in commands:
             if args[0] == 'exit':
                 break
@@ -30,6 +30,12 @@ def main():
                             print('isi '+result)
                     else:
                         print(results)
+            if args[0] == 'rm':
+                errors, results, cwd = middleware.args(args, cwd)
+                if(errors is not None):
+                    print('Server:'+errors)
+                else:
+                    print(results)
 
         elif args[0] == '':
             continue

@@ -9,7 +9,7 @@ class Worker(object):
     sharing_folder = {}
 
     def __init__(self):
-        self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/vfs-pyro'
+        self.sharing_folder['base'] = '/home/administrator/Documents/sister/vfs-pyro'
         self.sharing_folder['path'] = 'worker2'
 
     #def createPath(self,wcd ,path):
@@ -17,7 +17,7 @@ class Worker(object):
     def isExistFolder(self, path):
         if(path == '/'):
             path = path+self.sharing_folder['path']
-            
+
         paths = path.split('/')
         if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
             return False
@@ -47,7 +47,7 @@ class Worker(object):
         else:
             return 'Folder tidak ada', []
 
-        
+
 
 def main():
     Pyro4.Daemon.serveSimple(

@@ -2,7 +2,7 @@ import sys
 import Pyro4
 import os
 
-list_workers = ['PYRO:worker@127.0.0.1:9001', 'PYRO:worker@127.0.0.1:9002']
+list_workers = ['PYRO:worker@127.0.0.1:9001']
 workers = []
 
 
@@ -32,19 +32,19 @@ class Middleware(object):
 
                 if(len(temp_args)==empty_n):
                     counter = empty_n-1
-                    
+
                     if(empty_n>len(temp_cwds)):
                         cwd = '/'
                         return cwd
 
                     for i in range(len(temp_cwds)-1, 0, -1):
-                        
+
                         temp_cwds[i] = temp_args[counter]
                         counter-=1
                         if(counter==0):
                             cwd_fix = []
                             for temp_cwd in temp_cwds:
-                                
+
                                 if len(temp_cwd)>0:
                                     cwd_fix.append(temp_cwd)
 
@@ -55,21 +55,21 @@ class Middleware(object):
                                 cwd_fix = '/'+cwd_fix
                             break
                     return cwd_fix
-                else: 
+                else:
                     temp_cwds.reverse()
                     counter=1;
                     cwd_fix = '/'
                     flag_break = 0;
                     for i in range(0, len(temp_cwds)-1):
-                        
+
                         temp_cwds[i] = temp_args[counter]
                         counter+=1
-                        
+
                         if(len(temp_args)==counter):
                             cwd_fix = []
                             temp_cwds.reverse()
                             for temp_cwd in temp_cwds:
-                                
+
                                 if len(temp_cwd)>0:
                                     cwd_fix.append(temp_cwd)
 
@@ -79,16 +79,28 @@ class Middleware(object):
                             else:
                                 cwd_fix = '/'+cwd_fix
                             break
-                    
+
                     return cwd_fix
             else:
                 if cwd == '/':
                     return (cwd+args[1])
                 else:
                     return (cwd+'/'+args[1])
+    def removeData(self, cwd, path=None):
+        errors = []
+        flag_exist = 0
+        for worker in workers:
+            error, results = worker.removeData(cwd, path)
+            print('%s %s', error, results)
+            if(error is not None):
+                errors.append(error)
+
+        if(len(workers)==len(errors)):
+            return 'Tidak ada data', ''
+        return None, 'Sudah dihapus'
 
     def listingFolder(self, cwd, path=None):
-        
+
         list_folders = []
         errors = []
         flag_exist = 0
@@ -118,7 +130,7 @@ class Middleware(object):
     def args(self,args,cwd):
         if args[0] == 'ls':
             path = self.generateStructureFolder(cwd, args)
-            print path
+            print (path)
             if(len(args)==1):
                 error, result = self.listingFolder(cwd,path)
                 return error, result, cwd
@@ -128,14 +140,19 @@ class Middleware(object):
 
         elif args[0] == 'cd':
             path = self.generateStructureFolder(cwd, args)
-            print path
+            print (path)
             if(self.checkDir(path)):
                 return None, cwd, path
             else:
                 return 'Folder tidak ada', cwd, cwd
-            
+        elif args[0] == 'rm':
+            path = self.generateStructureFolder(cwd, args)
+            print (path)
+            error, result = self.removeData(cwd, path)
+            return error, result, cwd
+
         else:
-            return None, []
+            return None, 'Perintah tidak ada', cwd
 
 
 
