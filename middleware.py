@@ -17,19 +17,87 @@ class Middleware(object):
     def getCommands(self):
         return self.commands
 
+    def generateStructureFolder(self, cwd, args):
+        if(len(args)==1):
+            return cwd
+        else:
+            if args[1][0] == '/':
+                return args[1]
+
+            elif '../' in args[1]:
+                temp_args = args[1].split('../')
+                empty_n = temp_args.count('')
+
+                temp_cwds = cwd.split('/')
+
+                if(len(temp_args)==empty_n):
+                    counter = empty_n-1
+                    
+                    if(empty_n>len(temp_cwds)):
+                        cwd = '/'
+                        return cwd
+
+                    for i in range(len(temp_cwds)-1, 0, -1):
+                        
+                        temp_cwds[i] = temp_args[counter]
+                        counter-=1
+                        if(counter==0):
+                            cwd_fix = []
+                            for temp_cwd in temp_cwds:
+                                
+                                if len(temp_cwd)>0:
+                                    cwd_fix.append(temp_cwd)
+
+                            cwd_fix = '/'.join(cwd_fix)
+                            if(cwd_fix=='/'):
+                                cwd_fix == '/'
+                            else:
+                                cwd_fix = '/'+cwd_fix
+                            break
+                    return cwd_fix
+                else: 
+                    temp_cwds.reverse()
+                    counter=1;
+                    cwd_fix = '/'
+                    flag_break = 0;
+                    for i in range(0, len(temp_cwds)-1):
+                        
+                        temp_cwds[i] = temp_args[counter]
+                        counter+=1
+                        
+                        if(len(temp_args)==counter):
+                            cwd_fix = []
+                            temp_cwds.reverse()
+                            for temp_cwd in temp_cwds:
+                                
+                                if len(temp_cwd)>0:
+                                    cwd_fix.append(temp_cwd)
+
+                            cwd_fix = '/'.join(cwd_fix)
+                            if(cwd_fix=='/'):
+                                cwd_fix == '/'
+                            else:
+                                cwd_fix = '/'+cwd_fix
+                            break
+                    
+                    return cwd_fix
+            else:
+                if cwd == '/':
+                    return (cwd+args[1])
+                else:
+                    return (cwd+'/'+args[1])
+
     def listingFolder(self, cwd, path=None):
         
     	list_folders = []
+        flag_exist = 0
     	for worker in workers:
             error, list_folder = worker.listingFolder(cwd, path)
             list_folders = list_folders+list_folder
 
-        if(len(list_folders)):
-            return None, list_folders
-        else:
-            return 'Folder Tidak Ada', []
+        return None, list_folders
 
-    def changeDir(self, cwd):
+    def checkDir(self, cwd):
         flag_exist = 0
         for worker in workers:
             res = worker.isExistFolder(cwd)
@@ -41,116 +109,25 @@ class Middleware(object):
         else:
             return False
 
-
     def args(self,args,cwd):
         if args[0] == 'ls':
+            path = self.generateStructureFolder(cwd, args)
+            print path
             if(len(args)==1):
-                
-                error, result = self.listingFolder(cwd)
+                error, result = self.listingFolder(cwd,path)
                 return error, result, cwd
             else:
-                
-                error, result = self.listingFolder(cwd, args[1])
+                error, result = self.listingFolder(cwd,path)
                 return error, result, cwd
 
         elif args[0] == 'cd':
-            if(len(args)==1):
-                cwd = '/'
-                return None, '/', cwd
+            path = self.generateStructureFolder(cwd, args)
+            print path
+            if(self.checkDir(path)):
+                return None, cwd, path
             else:
-                if args[1][0] == '/':
-                    flag = self.changeDir(args[1])
-                    if(flag):
-                        cwd = args[1]
-                        return None, cwd , cwd
-                    else:
-                        return 'Error Folder tidak ada', cwd , cwd
-
-                elif '../' in args[1]:
-                    temp_args = args[1].split('../')
-                    empty_n = temp_args.count('')
-
-                    temp_cwds = cwd.split('/')
-
-                    if(len(temp_args)==empty_n):
-                        counter = empty_n-1
-                        
-                        
-                        if(empty_n>len(temp_cwds)):
-                            cwd = '/'
-                            return None,cwd,cwd
-
-                        for i in range(len(temp_cwds)-1, 0, -1):
-                            
-                            temp_cwds[i] = temp_args[counter]
-                            counter-=1
-                            if(counter==0):
-                                cwd_fix = []
-                                for temp_cwd in temp_cwds:
-                                    
-                                    if len(temp_cwd)>0:
-                                        cwd_fix.append(temp_cwd)
-
-                                cwd_fix = '/'.join(cwd_fix)
-                                if(cwd_fix=='/'):
-                                    cwd_fix == '/'
-                                else:
-                                    cwd_fix = '/'+cwd_fix
-                                break
-                        flag = self.changeDir(cwd_fix)
-                        if(flag):
-                            return None, cwd_fix , cwd_fix
-                        else:
-                            return 'Error Folder tidak ada', cwd_fix , cwd_fix
-                    else:
-                        
-                        temp_cwds.reverse()
-                        
-                        counter=1;
-                        cwd_fix = '/'
-                        flag_break = 0;
-                        for i in range(0, len(temp_cwds)-1):
-                            
-                            temp_cwds[i] = temp_args[counter]
-                            counter+=1
-                            
-                            if(len(temp_args)==counter):
-                                cwd_fix = []
-                                temp_cwds.reverse()
-                                for temp_cwd in temp_cwds:
-                                    
-                                    if len(temp_cwd)>0:
-                                        cwd_fix.append(temp_cwd)
-
-                                cwd_fix = '/'.join(cwd_fix)
-                                if(cwd_fix=='/'):
-                                    cwd_fix == '/'
-                                else:
-                                    cwd_fix = '/'+cwd_fix
-                                break
-                        
-                        flag = self.changeDir(cwd_fix)
-                        if(flag and cwd_fix != '/'):
-                            return None, cwd_fix , cwd_fix
-                        else:
-                            return 'Error Folder tidak ada', cwd , cwd
-                else:
-                    if cwd == '/':
-                        flag = self.changeDir(cwd+args[1])
-                        if(flag):
-                            cwd = cwd+args[1]
-                            return None, cwd , cwd
-                        else:
-                            return 'Error Folder tidak ada', cwd , cwd
-                    else:
-                        flag = self.changeDir(cwd+'/'+args[1])
-                        if(flag):
-                            cwd = cwd+'/'+args[1]
-                            return None, cwd , cwd
-                        else:
-                            return 'Error Folder tidak ada', cwd , cwd
-
-                return None, cwd , cwd
+                return 'Folder tidak ada', cwd, cwd
+            
         else:
         	return None, []
 

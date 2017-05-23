@@ -9,12 +9,16 @@ class Worker(object):
     sharing_folder = {}
 
     def __init__(self):
-        self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/fp'
+        self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/vfs-pyro'
         self.sharing_folder['path'] = 'worker2'
 
     #def createPath(self,wcd ,path):
 
     def isExistFolder(self, path):
+        print(path)
+        if(path == '/'):
+            path = path+self.sharing_folder['path']
+        
         paths = path.split('/')
         if(paths[1] != self.sharing_folder['path']):
             return False
@@ -32,19 +36,16 @@ class Worker(object):
         return self.sharing_folder
 
     def listingFolder(self, cwd, path=None):
-        print("A")
-        print(path)
-        print(cwd)
+        print (path)
+        if(path == '/'):
+            return None,[self.sharing_folder['path']]
 
-        # if path is None:
-        #     if cwd == '/':
-        #         print('CWD hanya /')
-        #         return None, [self.sharing_folder['path']]
-        #     else:
-                
-        # else:
-        #     path_active = createPath(cwd, path)
-        return ['Tidak ada'], ['A']
+        flag = self.isExistFolder(path)
+        if(flag):
+            print('Masuk sini')
+            return None, os.listdir(self.sharing_folder['base']+path)
+        else:
+            return 'Folder tidak ada', []
 
         
 

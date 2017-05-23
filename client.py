@@ -20,15 +20,16 @@ def main():
 				errors, results, cwd = middleware.args(args, cwd)
 				if(errors is not None):
 					print('Server: '+errors)
-			# errors, results = middleware.args(args, cwd)
-			# if(errors is not None):
-			# 	print('Server: '+errors)
-			# else:
-			# 	if(isinstance(results, list)):
-			# 		for result in results:
-			# 			print(result)
-			# 	else:
-			# 		print(results)
+			if args[0] == 'ls':
+				errors, results, cwd = middleware.args(args, cwd)
+				if(errors is not None):
+					print('Server: '+errors)
+				else:
+					if(isinstance(results, list)):
+						for result in results:
+							print(result)
+					else:
+						print(results)
 
 		elif args[0] == '':
 			continue
