@@ -89,10 +89,10 @@ class Middleware(object):
 
     def listingFolder(self, cwd, path=None):
         
-    	list_folders = []
+        list_folders = []
         errors = []
         flag_exist = 0
-    	for worker in workers:
+        for worker in workers:
             error, list_folder = worker.listingFolder(cwd, path)
             list_folders = list_folders+list_folder
             if(error is not None):
@@ -135,18 +135,18 @@ class Middleware(object):
                 return 'Folder tidak ada', cwd, cwd
             
         else:
-        	return None, []
+            return None, []
 
 
 
 def listenToWorker():
-	for list_worker in list_workers:
-		worker = Pyro4.Proxy(list_worker)
-		workers.append(worker)
+    for list_worker in list_workers:
+        worker = Pyro4.Proxy(list_worker)
+        workers.append(worker)
 
 def main():
-	listenToWorker()
-	Pyro4.Daemon.serveSimple(
+    listenToWorker()
+    Pyro4.Daemon.serveSimple(
         {
             Middleware: "middleware"
         },

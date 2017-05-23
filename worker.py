@@ -12,7 +12,6 @@ class Worker(object):
         self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/vfs-pyro'
         self.sharing_folder['path'] = 'worker1'
 
-    #def createPath(self,wcd ,path):
 
     def isExistFolder(self, path):
         if(path == '/'):
