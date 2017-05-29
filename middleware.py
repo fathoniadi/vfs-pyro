@@ -11,7 +11,7 @@ workers = []
 class Middleware(object):
 
     def __init__(self):
-        self.commands = ['ls','cd','rm','mv','touch','exit']
+        self.commands = ['ls','cd','rm','mv','touch','exit','cp']
         return
 
     def getCommands(self):
@@ -101,15 +101,55 @@ class Middleware(object):
     def touch(self, cwd, path=None):
         errors = []
         flag_exist = 0
+        paths = path.split('/')
+        if(len(paths)==2):
+            size = -1000;
+            worker_selected = ''
+            for worker in workers:
+                temp, temp_path = worker.checkData(path)
+                if(temp):
+                    errors.append(temp)
+
+            if(len(errors) > 0):
+                return 'Tidak bisa membuat file, file sudah ada', None
+
+            for worker in workers:
+                temp = worker.getSize()
+                print(temp)
+                if(size < temp):
+                    size = temp
+                    worker_selected = worker
+
+            error, results = worker_selected.touch(cwd, path)
+            if(error):
+                return error, None
+            return None, results
+        else:
+            print('masuk else')
+            for worker in workers:
+                error, results = worker.touch(cwd, path)
+                if(error is not None):
+                    errors.append(error)
+
+            if(len(workers)==len(errors)):
+                print('error')
+                return error, ''
+            return None, 'File Sudah Dibuat'
+
+    def copy(self, cwd, path_from, path_to):
+        errors = []
+        worker_from = ''
+        flag_exist = 0
         for worker in workers:
-            error, results = worker.touch(cwd, path)
-            print('%s %s',error, results)
+            error, data = worker.listSource(cwd, path_from)
             if(error is not None):
                 errors.append(error)
+            else:
+                worker_from = worker
 
         if(len(workers)==len(errors)):
             return error, ''
-        return None, results
+        return None, data
 
     def listingFolder(self, cwd, path=None):
 
@@ -173,10 +213,21 @@ class Middleware(object):
                 return args[0]+': missing operand',None,cwd
             else:
                 path = self.generateStructureFolder(cwd, args, args[1])
-            print(path)
             error, result = self.touch(cwd, path)
-            print('%s %s',error, result)
             return error, result, cwd
+
+        elif args[0] == 'cp':
+            if(len(args)==1):
+                return args[0]+': missing operand',None,cwd
+            elif(len(args)==2):
+                return args[0]+': missing destination file operand after '+args[1],None,cwd
+            else:
+                print(args)
+                path_from = self.generateStructureFolder(cwd, args, args[1])
+                path_to = self.generateStructureFolder(cwd, args, args[2])
+                print('%s %s', path_from, path_to)
+            error, result = self.copy(cwd, path_from, path_tos)
+            return '', ' result ', cwd
 
         else:
             return None, 'Perintah tidak ada', cwd
