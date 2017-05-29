@@ -138,7 +138,7 @@ class Middleware(object):
         errors = []
         worker_from = ''
         method_copy = 0
-        list = []
+        lists = []
         flag_exist = 0
         for worker in workers:
             error, method, data = worker.listSource(cwd, path_from)
@@ -147,7 +147,7 @@ class Middleware(object):
                 errors.append(error)
             else:
                 worker_from = worker
-                list = data
+                lists = data
                 method_copy = method
 
         if(len(workers)==len(errors)):
@@ -155,8 +155,9 @@ class Middleware(object):
 
         if(method_copy==1):
             data = worker_from.readFile(cwd, path_from)
-            paths = path_from.split('/')
-            if(len(paths)==2):
+            paths_from = path_from.split('/')
+            paths_to = path_to.split('/')
+            if(len(paths_to)==2):
                 size = -1000;
                 worker_selected = ''
                 for worker in workers:
@@ -190,10 +191,77 @@ class Middleware(object):
                     return error, ''
                 print('sukses')
                 return None, 'File Sudah Dibuat'
+        else:
+            paths_from = path_from.split('/')
+            paths_to = path_to.split('/')
 
+            if(len(paths_to)==2):
+                size = -1000;
+                worker_selected = ''
+                for worker in workers:
+                    temp, temp_path = worker.checkData(path_to)
+                    if(temp):
+                        errors.append(temp)
 
+                if(len(errors) > 0):
+                    return 'Tidak bisa membuat folder, folder sudah ada', None
 
-        return None, data
+                for worker in workers:
+                    temp = worker.getSize()
+                    print(temp)
+                    if(size < temp):
+                        size = temp
+                        worker_selected = worker
+
+                error, result = worker_selected.makeFolder(cwd, path_to)
+                if(error):
+                    return error, None
+                for file in lists:
+                    if(file['type']==1):
+                        print('ini file')
+                        data = worker_from.readFile(cwd, path_from+file['name'])
+                        error, results = worker_selected.makeFile(cwd, path_to+file['name'], data)
+                    elif(file['type']==2):
+                        print('ini folder')
+                        error, result = worker_selected.makeFolder(cwd, path_to+file['name'])
+                    
+                    if(error):
+                        return error, None
+
+                return None, 'Berhasil copy'
+
+            else:
+                path_to_s = path_to.replace('/'+paths_to[len(paths_to)-1],'')
+                print(path_to_s)
+                worker_selected = ''
+                for worker in workers:
+                    temp, temp_path = worker.checkData(path_to_s)
+                    if(temp==0):
+                        errors.append(temp)
+                    else:
+                        worker_selected = worker
+
+                if(len(errors) == len(workers)):
+                    return 'Tidak bisa membuat folder, folder tidak tersedia', None
+
+                error, result = worker_selected.makeFolder(cwd, path_to)
+                if(error):
+                    return error, None
+
+                for file in lists:
+                    if(file['type']==1):
+                        print('ini file')
+                        data = worker_from.readFile(cwd, path_from+file['name'])
+                        error, results = worker_selected.makeFile(cwd, path_to+file['name'], data)
+                    elif(file['type']==2):
+                        print('ini folder')
+                        error, result = worker_selected.makeFolder(cwd, path_to+file['name'])
+                    
+                    if(error):
+                        return error, None
+
+                return None, 'Berhasil copy'
+
 
     def listingFolder(self, cwd, path=None):
 
@@ -269,7 +337,7 @@ class Middleware(object):
                 path_from = self.generateStructureFolder(cwd, args, args[1])
                 path_to = self.generateStructureFolder(cwd, args, args[2])
             error, result = self.copy(cwd, path_from, path_to)
-            return error, 'result', cwd
+            return error, result, cwd
 
         else:
             return None, 'Perintah tidak ada', cwd

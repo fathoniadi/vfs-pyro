@@ -90,14 +90,17 @@ class Worker(object):
 
     def makeFolder(self, cwd, path):
         full_path = self.sharing_folder['base']+path
+        print('Folder baru '+full_path)
         if(os.path.exists(full_path)):
             return 'Tidak bisa membuat folder, folder sudah ada', None
         try:
             os.makedirs(full_path)
-            return None, 'File sudah dibuat'
+            return None, 'Folder sudah dibuat'
         except Exception as e:
             err = str(e)
-            return err.replace(self.sharing_folder['base'],''), None
+            err = err.replace(self.sharing_folder['base'],'')
+            print(err)
+            return err, None
 
     def makeFile(self, cwd, path, data):
         full_path = self.sharing_folder['base']+path
