@@ -2,7 +2,7 @@ import sys
 import Pyro4
 import os
 
-list_workers = ['PYRO:worker@127.0.0.1:9001', 'PYRO:worker@127.0.0.1:9002']
+list_workers = ['PYRO:worker@127.0.0.1:9001']
 workers = []
 
 
@@ -125,30 +125,74 @@ class Middleware(object):
                 return error, None
             return None, results
         else:
-            print('masuk else')
             for worker in workers:
                 error, results = worker.touch(cwd, path)
                 if(error is not None):
                     errors.append(error)
 
             if(len(workers)==len(errors)):
-                print('error')
                 return error, ''
             return None, 'File Sudah Dibuat'
 
     def copy(self, cwd, path_from, path_to):
         errors = []
         worker_from = ''
+        method_copy = 0
+        list = []
         flag_exist = 0
         for worker in workers:
-            error, data = worker.listSource(cwd, path_from)
+            error, method, data = worker.listSource(cwd, path_from)
+            print('%s %s %s', error, method, data)
             if(error is not None):
                 errors.append(error)
             else:
                 worker_from = worker
+                list = data
+                method_copy = method
 
         if(len(workers)==len(errors)):
-            return error, ''
+            return 'Folder atau file '+path_from+' tidak ada', None
+
+        if(method_copy==1):
+            data = worker_from.readFile(cwd, path_from)
+            paths = path_from.split('/')
+            if(len(paths)==2):
+                size = -1000;
+                worker_selected = ''
+                for worker in workers:
+                    temp, temp_path = worker.checkData(path_to)
+                    if(temp):
+                        errors.append(temp)
+
+                if(len(errors) > 0):
+                    return 'Tidak bisa membuat file, file sudah ada', None
+
+                for worker in workers:
+                    temp = worker.getSize()
+                    print(temp)
+                    if(size < temp):
+                        size = temp
+                        worker_selected = worker
+
+                error, results = worker_selected.makeFile(cwd, path_to, data)
+                if(error):
+                    return error, None
+                return None, results
+            else:
+                for worker in workers:
+                    error, results = worker.makeFile(cwd, path_to, data)
+                    print('%s %s', error, results)
+                    if(error is not None):
+                        errors.append(error)
+                
+                if(len(workers)==len(errors)):
+                    print('gagal')
+                    return error, ''
+                print('sukses')
+                return None, 'File Sudah Dibuat'
+
+
+
         return None, data
 
     def listingFolder(self, cwd, path=None):
@@ -222,12 +266,10 @@ class Middleware(object):
             elif(len(args)==2):
                 return args[0]+': missing destination file operand after '+args[1],None,cwd
             else:
-                print(args)
                 path_from = self.generateStructureFolder(cwd, args, args[1])
                 path_to = self.generateStructureFolder(cwd, args, args[2])
-                print('%s %s', path_from, path_to)
-            error, result = self.copy(cwd, path_from, path_tos)
-            return '', ' result ', cwd
+            error, result = self.copy(cwd, path_from, path_to)
+            return error, 'result', cwd
 
         else:
             return None, 'Perintah tidak ada', cwd

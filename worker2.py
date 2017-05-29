@@ -31,11 +31,6 @@ class Worker(object):
         return self.sharing_folder
 
     def checkData(self, path):
-        # if(path == '/'):
-        #     path = path+self.sharing_folder['path']
-        # paths = path.split('/')
-        # if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
-        #     return 'Tidak', None
         full_path = self.sharing_folder['base']+path
         if(os.path.isfile(full_path)):
             return 1, full_path
@@ -61,27 +56,26 @@ class Worker(object):
         return disk.f_bfree
 
     def listSource(self, cwd, path=None):
+        list = []
         flag, full_path = self.checkData(path)
         if(flag == 1):
             print(full_path)
             
-            return None, 'Berhasil'
+            return None, 1, path
 
         elif(flag == 2):
             print(full_path)
             for root, dirs, files in os.walk(full_path, topdown=True):
                 for name in files:
-                    print(os.path.join(root, name))
+                    list.append({'name':os.path.join(root, name).replace(self.sharing_folder['base'],''), 'type':1})
                 for name in dirs:
-                    print(os.path.join(root, name))
+                    list.append({'name':os.path.join(root, name).replace(self.sharing_folder['base'],''), 'type':2})
 
-            return None, 'Berhasil'
+            return None, 2, list
         else:
             return 'Tidak ada', None
 
     def listingFolder(self, cwd, path=None):
-        # if(path == '/'):
-        #     return None, [self.sharing_folder['path']]
         print(path)
         flag = self.isExistFolder(path)
         if(flag):
@@ -92,13 +86,6 @@ class Worker(object):
             return 'Folder tidak ada', []
 
     def touch(self, cwd, path=None):
-
-        # paths = path.split('/')
-        # if(len(paths)==2):
-        #     return 'Permission Denied: Tidak bisa membuat file di root', None
-
-        # if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
-        #     return 'Tidak', None
         full_path = self.sharing_folder['base']+path
         if(os.path.isfile(full_path)):
             return 'Tidak bisa membuat file, file sudah ada', None
