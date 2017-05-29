@@ -2,7 +2,7 @@ import sys
 import Pyro4
 import os
 
-list_workers = ['PYRO:worker@127.0.0.1:9001']
+list_workers = ['PYRO:worker@127.0.0.1:9001', 'PYRO:worker@127.0.0.1:9002']
 workers = []
 
 
@@ -17,15 +17,15 @@ class Middleware(object):
     def getCommands(self):
         return self.commands
 
-    def generateStructureFolder(self, cwd, args):
+    def generateStructureFolder(self, cwd, args, path_req=''):
         if(len(args)==1):
             return cwd
         else:
-            if args[1][0] == '/':
-                return args[1]
+            if path_req[0] == '/':
+                return path_req
 
-            elif '../' in args[1]:
-                temp_args = args[1].split('../')
+            elif '../' in path_req:
+                temp_args = path_req.split('../')
                 empty_n = temp_args.count('')
 
                 temp_cwds = cwd.split('/')
@@ -83,21 +83,33 @@ class Middleware(object):
                     return cwd_fix
             else:
                 if cwd == '/':
-                    return (cwd+args[1])
+                    return (cwd+path_req)
                 else:
-                    return (cwd+'/'+args[1])
+                    return (cwd+'/'+path_req)
     def removeData(self, cwd, path=None):
         errors = []
         flag_exist = 0
         for worker in workers:
             error, results = worker.removeData(cwd, path)
-            print('%s %s', error, results)
             if(error is not None):
                 errors.append(error)
 
         if(len(workers)==len(errors)):
             return 'Tidak ada data', ''
         return None, 'Sudah dihapus'
+
+    def touch(self, cwd, path=None):
+        errors = []
+        flag_exist = 0
+        for worker in workers:
+            error, results = worker.touch(cwd, path)
+            print('%s %s',error, results)
+            if(error is not None):
+                errors.append(error)
+
+        if(len(workers)==len(errors)):
+            return error, ''
+        return None, results
 
     def listingFolder(self, cwd, path=None):
 
@@ -109,7 +121,6 @@ class Middleware(object):
             list_folders = list_folders+list_folder
             if(error is not None):
                 errors.append(error)
-            print(list_folder)
 
         if(len(workers)==len(errors)):
             return 'Tidak ada folder', []
@@ -129,8 +140,10 @@ class Middleware(object):
 
     def args(self,args,cwd):
         if args[0] == 'ls':
-            path = self.generateStructureFolder(cwd, args)
-            print (path)
+            if(len(args)==1):
+                path = self.generateStructureFolder(cwd, args)
+            else:
+                path = self.generateStructureFolder(cwd, args, args[1])
             if(len(args)==1):
                 error, result = self.listingFolder(cwd,path)
                 return error, result, cwd
@@ -139,16 +152,30 @@ class Middleware(object):
                 return error, result, cwd
 
         elif args[0] == 'cd':
-            path = self.generateStructureFolder(cwd, args)
-            print (path)
+            if(len(args)==1):
+                path = self.generateStructureFolder(cwd, args)
+            else:
+                path = self.generateStructureFolder(cwd, args, args[1])
             if(self.checkDir(path)):
                 return None, cwd, path
             else:
                 return 'Folder tidak ada', cwd, cwd
         elif args[0] == 'rm':
-            path = self.generateStructureFolder(cwd, args)
-            print (path)
+            if(len(args)==1):
+                return args[0]+': missing operand',None,cwd
+            else:
+                path = self.generateStructureFolder(cwd, args, args[1])
             error, result = self.removeData(cwd, path)
+            return error, result, cwd
+
+        elif args[0] == 'touch':
+            if(len(args)==1):
+                return args[0]+': missing operand',None,cwd
+            else:
+                path = self.generateStructureFolder(cwd, args, args[1])
+            print(path)
+            error, result = self.touch(cwd, path)
+            print('%s %s',error, result)
             return error, result, cwd
 
         else:

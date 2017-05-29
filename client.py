@@ -9,7 +9,7 @@ def main():
     while True:
         args = []
         print('Client > '+cwd+' % '),
-        arg = input()
+        arg = raw_input()
         args.extend(arg.split(' '))
 
         if args[0] in commands:
@@ -27,15 +27,22 @@ def main():
                 else:
                     if(isinstance(results, list)):
                         for result in results:
-                            print('isi '+result)
+                            print(result)
                     else:
                         print(results)
             if args[0] == 'rm':
                 errors, results, cwd = middleware.args(args, cwd)
                 if(errors is not None):
-                    print('Server:'+errors)
+                    print('Server: '+errors)
                 else:
-                    print(results)
+                    print('Server: '+results)
+            
+            if args[0] == 'touch':
+                errors, results, cwd = middleware.args(args, cwd)
+                if(errors is not None):
+                    print('Server: '+errors)
+                else:
+                    print('Server: '+results)
 
         elif args[0] == '':
             continue

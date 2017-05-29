@@ -1,6 +1,7 @@
 from __future__ import print_function
 import Pyro4
 import os
+import shutil
 
 @Pyro4.expose
 @Pyro4.callback
@@ -9,10 +10,9 @@ class Worker(object):
     sharing_folder = {}
 
     def __init__(self):
-        self.sharing_folder['base'] = '/home/administrator/Documents/sister/vfs-pyro'
+        self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/vfs-pyro'
         self.sharing_folder['path'] = 'worker2'
 
-    #def createPath(self,wcd ,path):
 
     def isExistFolder(self, path):
         if(path == '/'):
@@ -22,31 +22,72 @@ class Worker(object):
         if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
             return False
         full_path = self.sharing_folder['base']+path
-        print(full_path)
         if(os.path.isdir(full_path)):
-            print("Ada")
             return True
         else:
-            print("Tidak")
             return False
 
 
     def getSharingFolder(self):
         return self.sharing_folder
 
+    def checkData(self, path):
+        if(path == '/'):
+            path = path+self.sharing_folder['path']
+        paths = path.split('/')
+        if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
+            return False
+        full_path = self.sharing_folder['base']+path
+        if(os.path.isfile(full_path)):
+            return 1, full_path
+        elif(os.path.isdir(full_path)):
+            return 2, full_path
+        else:
+            return 0, full_path
+
+    def removeData(self, cwd, path=None):
+        flag, full_path = self.checkData(path)
+        if(flag == 1):
+            os.remove(full_path)
+            return None, 'Berhasil'
+
+        elif(flag == 2):
+            shutil.rmtree(full_path)
+            return None, 'Berhasil'
+        else:
+            return 'Tidak ada', None
+
     def listingFolder(self, cwd, path=None):
-        print (path)
         if(path == '/'):
             return None, [self.sharing_folder['path']]
 
         flag = self.isExistFolder(path)
         if(flag):
             list_folders = os.listdir(self.sharing_folder['base']+path)
-            print(list_folders)
             return None, list_folders
         else:
             return 'Folder tidak ada', []
 
+    def touch(self, cwd, path=None):
+        print(path)
+
+
+        paths = path.split('/')
+        if(len(paths)==2):
+            return 'Permission Denied: Tidak bisa membuat file di root', None
+
+        if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
+            return 'Tidak', None
+        full_path = self.sharing_folder['base']+path
+        if(os.path.isfile(full_path)):
+            return 'Tidak bisa membuat file, file sudah ada', None
+        try:
+            with open(full_path, 'w'):
+                os.utime(full_path, None)
+                return None, 'File sudah dibuat'
+        except Exception as e:
+            err = str(e)
+            return err.replace(self.sharing_folder['base'],''), None
 
 
 def main():
