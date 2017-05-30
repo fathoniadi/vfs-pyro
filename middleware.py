@@ -2,7 +2,7 @@ import sys
 import Pyro4
 import os
 
-list_workers = ['PYRO:worker@127.0.0.1:9001']
+list_workers = ['PYRO:worker@127.0.0.1:9001','PYRO:worker@10.151.38.38:9001']
 workers = []
 
 
@@ -155,9 +155,11 @@ class Middleware(object):
 
         if(method_copy==1):
             data = worker_from.readFile(cwd, path_from)
+            errors = []
             paths_from = path_from.split('/')
             paths_to = path_to.split('/')
             if(len(paths_to)==2):
+                print('root')
                 size = -1000;
                 worker_selected = ''
                 for worker in workers:
@@ -194,18 +196,21 @@ class Middleware(object):
         else:
             paths_from = path_from.split('/')
             paths_to = path_to.split('/')
-
+            errors = []
             if(len(paths_to)==2):
                 size = -1000;
                 worker_selected = ''
                 for worker in workers:
                     temp, temp_path = worker.checkData(path_to)
+                    print(temp)
                     if(temp):
                         errors.append(temp)
 
+                print(errors)
                 if(len(errors) > 0):
                     return 'Tidak bisa membuat folder, folder sudah ada', None
 
+                print('lolos')
                 for worker in workers:
                     temp = worker.getSize()
                     print(temp)
@@ -234,6 +239,7 @@ class Middleware(object):
                 path_to_s = path_to.replace('/'+paths_to[len(paths_to)-1],'')
                 print(path_to_s)
                 worker_selected = ''
+                errors = []
                 for worker in workers:
                     temp, temp_path = worker.checkData(path_to_s)
                     if(temp==0):

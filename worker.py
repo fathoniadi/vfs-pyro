@@ -108,7 +108,7 @@ class Worker(object):
             return 'Tidak bisa membuat file, file sudah ada', None
         try:
             with open(full_path, 'wb') as file:
-                file.write(data)
+                file.write(data.encode('utf-8').strip())
             return None, 'File sudah dibuat'
         except Exception as e:
             err = str(e)
