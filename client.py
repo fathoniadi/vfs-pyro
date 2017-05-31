@@ -30,7 +30,7 @@ def main():
                             print(result)
                     else:
                         print(results)
-            if args[0] == 'rm' or args[0] == 'touch' or args[0] == 'cp':
+            if args[0] == 'rm' or args[0] == 'touch' or args[0] == 'cp' or args[0] == 'mv':
                 errors, results, cwd = middleware.args(args, cwd)
                 if(errors is not None):
                     print('Server: '+errors)
