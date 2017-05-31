@@ -31,6 +31,11 @@ class Worker(object):
         return self.sharing_folder
 
     def checkData(self, path):
+        # if(path == '/'):
+        #     path = path+self.sharing_folder['path']
+        # paths = path.split('/')
+        # if(paths[1] != self.sharing_folder['path'] and paths[1]!='/'):
+        #     return 'Tidak', None
         full_path = self.sharing_folder['base']+path
         if(os.path.isfile(full_path)):
             return 1, full_path
@@ -51,32 +56,26 @@ class Worker(object):
         else:
             return 'Tidak ada', None
 
-    def getSize(self):
-        disk = os.statvfs(self.sharing_folder['base'])
-        return disk.f_bfree
-
     def listSource(self, cwd, path=None):
         list = []
         flag, full_path = self.checkData(path)
         if(flag == 1):
             print(full_path)
-            
-            return None, 1, path
+            return None, 1, [{'name':path, 'type':1}]
 
         elif(flag == 2):
             print(full_path)
             for root, dirs, files in os.walk(full_path, topdown=True):
                 for name in files:
-                    list.append({'name':os.path.join(root, name).replace(self.sharing_folder['base'],''), 'type':1})
+                    list.append({'name':os.path.join(root, name).replace(full_path,''), 'type':1})
                 for name in dirs:
-                    list.append({'name':os.path.join(root, name).replace(self.sharing_folder['base'],''), 'type':2})
+                    list.append({'name':os.path.join(root, name).replace(full_path,''), 'type':2})
 
             return None, 2, list
         else:
-            return 'Tidak ada', None
+            return 'Tidak ada', 0, None
 
     def listingFolder(self, cwd, path=None):
-        print(path)
         flag = self.isExistFolder(path)
         if(flag):
             print(self.sharing_folder['base']+path)
@@ -85,14 +84,52 @@ class Worker(object):
         else:
             return 'Folder tidak ada', []
 
-    def touch(self, cwd, path=None):
+    def getSize(self):
+        disk = os.statvfs(self.sharing_folder['base'])
+        return disk.f_bfree
+
+    def makeFolder(self, cwd, path):
+        full_path = self.sharing_folder['base']+path
+        print('Folder baru '+full_path)
+        if(os.path.exists(full_path)):
+            return 'Tidak bisa membuat folder, folder sudah ada', None
+        try:
+            os.makedirs(full_path)
+            return None, 'Folder sudah dibuat'
+        except Exception as e:
+            err = str(e)
+            err = err.replace(self.sharing_folder['base'],'')
+            print(err)
+            return err, None
+
+    def makeFile(self, cwd, path, data):
         full_path = self.sharing_folder['base']+path
         if(os.path.isfile(full_path)):
             return 'Tidak bisa membuat file, file sudah ada', None
         try:
-            with open(full_path, 'w'):
+            with open(full_path, 'wb') as file:
+                file.write(data.encode('utf-8').strip())
+            return None, 'File sudah dibuat'
+        except Exception as e:
+            err = str(e)
+            return err.replace(self.sharing_folder['base'],''), None
+
+    def readFile(self, cwd, path=None):
+        flag, full_path = self.checkData(path)
+        data = ''
+        with open(full_path, 'rb') as file:
+            data = file.read()
+
+        return data
+
+    def touch(self, cwd, path=None):
+        full_path = self.sharing_folder['base']+path
+        print(full_path)
+        if(os.path.isfile(full_path)):
+            return 'Tidak bisa membuat file, file sudah ada', None
+        try:
+            with open(full_path, 'wb'):
                 os.utime(full_path, None)
-                print('bisa')
                 return None, 'File sudah dibuat'
         except Exception as e:
             err = str(e)

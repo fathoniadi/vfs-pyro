@@ -2,7 +2,7 @@ import sys
 import Pyro4
 import os
 
-list_workers = ['PYRO:worker@127.0.0.1:9001','PYRO:worker@10.151.38.38:9001']
+list_workers = ['PYRO:worker@127.0.0.1:9001','PYRO:worker@127.0.0.1:9002']
 workers = []
 
 
@@ -176,7 +176,6 @@ class Middleware(object):
                     if(size < temp):
                         size = temp
                         worker_selected = worker
-
                 error, results = worker_selected.makeFile(cwd, path_to, data)
                 if(error):
                     return error, None
@@ -192,7 +191,7 @@ class Middleware(object):
                     print('gagal')
                     return error, ''
                 print('sukses')
-                return None, 'File Sudah Dibuat'
+                return None, 'File Sudah Dicopy'
         else:
             paths_from = path_from.split('/')
             paths_to = path_to.split('/')
@@ -315,7 +314,7 @@ class Middleware(object):
                 error, results = worker_selected.makeFile(cwd, path_to, data)
                 if(error):
                     return error, None
-                error, results = removeData(cwd, path_from)
+                error, results = self.removeData(cwd, path_from)
                 if(error):
                     return 'Tidak bisa memindah file', None
                 return None, 'Berhasil memindah file'
@@ -326,12 +325,12 @@ class Middleware(object):
                     if(error is not None):
                         errors.append(error)
                     else:
-                        error, results = removeData(cwd, path_from)
+                        error, results = self.removeData(cwd, path_from)
                 if(len(workers)==len(errors)):
                     print('gagal')
                     return error, ''
                 print('sukses')
-                return None, 'File Sudah Dibuat'
+                return None, 'File Sudah Dipindah'
         else:
             paths_from = path_from.split('/')
             paths_to = path_to.split('/')
@@ -371,7 +370,7 @@ class Middleware(object):
                     
                     if(error):
                         return error, None
-                error, results = removeData(cwd, path_from)
+                error, results = self.removeData(cwd, path_from)
                 if(error):
                     return 'Tidak bisa memindah file', None      
                 return None, 'Berhasil copy'
@@ -406,10 +405,10 @@ class Middleware(object):
                         
                     if(error):
                         return error, None
-                error, results = removeData(cwd, path_from)
+                error, results = self.removeData(cwd, path_from)
                 if(error):
-                    return 'Tidak bisa memindah file', None
-                return None, 'Berhasil copy'
+                    return 'Tidak bisa memindah folder', None
+                return None, 'Berhasil dipindah'
 
 
     def listingFolder(self, cwd, path=None):

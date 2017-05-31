@@ -10,7 +10,7 @@ class Worker(object):
     sharing_folder = {}
 
     def __init__(self):
-        self.sharing_folder['base'] = '/home/administrator/Documents/sister/vfs-pyro/worker1'
+        self.sharing_folder['base'] = '/home/fathoniadi/Documents/sister/vfs-pyro/worker1'
 
 
     def isExistFolder(self, path):
